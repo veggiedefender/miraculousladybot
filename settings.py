@@ -1,7 +1,6 @@
 import pytumblr
 import psycopg2
 
-#Log in to tumblr
 client = pytumblr.TumblrRestClient( #https://api.tumblr.com/console
     '<consumer_key>',
     '<consumer_secret>',
@@ -9,11 +8,15 @@ client = pytumblr.TumblrRestClient( #https://api.tumblr.com/console
     '<oauth_secret>',
 )
 
-#Connect to database
 conn = psycopg2.connect("dbname=fanfictions user=postgres")
+
+blogName = "miraculousladybot"
+
+
+#Connect to database
 conn.autocommit = True
 db = conn.cursor()
 
-blogName = "miraculousladybot"
+
 
 print "Loaded settings"
