@@ -19,4 +19,4 @@ db = conn.cursor()
 
 
 
-print "Loaded settings"
+print "Loaded settings."

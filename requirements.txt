@@ -1,3 +1,4 @@
 pytumblr
 psycopg2
 bs4
+nltk
