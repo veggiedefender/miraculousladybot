@@ -1,0 +1,3 @@
+pytumblr
+psycopg2
+bs4
