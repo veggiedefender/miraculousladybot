@@ -70,8 +70,7 @@ def getInfo(post, tag):
         return (postID, blog, content, tag, timestamp)
     except UnboundLocalError:
         return None
-
-def 
+        
 #Loop through tags and log unique posts
 try:
     print "Running..."
