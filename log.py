@@ -1,6 +1,4 @@
 #All the imports
-import psycopg2
-import pytumblr
 import time
 from bs4 import BeautifulSoup
 import sys
@@ -26,11 +24,11 @@ if len(sys.argv) > 1:
     mode = "sync"
 else:
     mode = "run"
-    db.execute("SELECT date FROM logs ORDER BY date DESC LIMIT 1")
-    try:
-        latest = db.fetchall()[0][0]
-    except IndexError:
+    db.execute("SELECT * FROM logs LIMIT 1")
+    if len(db.fetchall()) == 0:
+        print "Database is empty."
         mode = "sync"
+
 print "Running in mode %s" % mode.upper()
 
 #Some helper functions
@@ -45,53 +43,69 @@ def sanitize(value):
     content = content.replace("\n", " ")
     return ' '.join(content.split()) + "\n"
 
-def insert(postID, blog, content, timestamp):
-    db.execute("INSERT INTO logs (id, blog, content, date) VALUES (%s, %s, %s, %s)",
-        (postID, blog, content, timestamp))
+def insert(postID, blog, content, tag, timestamp):
+    db.execute("INSERT INTO logs (id, blog, content, tag, date) VALUES (%s, %s, %s, %s, %s)",
+        (postID, blog, content, tag, timestamp))
 
-def unique(postID):
+def unique(post):
+    postID = post["id"]
     db.execute("SELECT * FROM logs WHERE id=%s", (postID,))
     results = db.fetchall()
     return len(results) == 0
+
+def getInfo(post, tag):
+    postID = post["id"]  
+
+    blog = post["blog_name"]                
+    
+    if post["type"] == "text":
+        if len(post["trail"]) > 0:
+            content = sanitize(post["trail"][0]["content"])
+    elif post["type"] == "quote":
+        if len(post["text"]) > 0:
+            content = sanitize(post["text"])
+
+    timestamp = post["timestamp"]  
+    try:
+        return (postID, blog, content, tag, timestamp)
+    except UnboundLocalError:
+        return None
 
 #Loop through tags and log unique posts
 try:
     print "Running..."
     for tag in tags:
         earliest = int(time.time()) #Bookmark for going back in time
+        if mode == "run":
+            db.execute("SELECT date FROM logs WHERE tag=%s ORDER BY date DESC LIMIT 1", (tag,))
+            latest = db.fetchall()[0][0]
 
         quit = False
         while not quit:
             posts = client.tagged(tag, limit=20, before=earliest)
 
-            for post in posts:
-                if post != None: #Sometimes tumblr API returns None
-                    blog = post["blog_name"]
-
-                    if blog != blogName and post["type"] in ["quote", "text"]:
-                        timestamp = post["timestamp"]
-
-                        if mode == "run" and timestamp < latest:
-                            quit = True
-                            break
-
-                        if timestamp < earliest:
-                            earliest = timestamp
-
-                        postID = post["id"]                    
-                        
-                        if post["type"] == "quote":
-                            if len(post["text"]) > 0:
-                                content = sanitize(post["text"])
-
-                        elif post["type"] == "text":
-                            if len(post["trail"]) > 0:
-                                content = sanitize(post["trail"][0]["content"])
-
-                        if unique(postID):
-                            insert(postID, blog, content, timestamp)
             if len(posts) == 0: #This means there are no posts left
                 quit = True
+                break
+
+            for post in posts:
+                if post != None and post["type"] in ["text", "quote"]:
+                    info = getInfo(post, tag)
+                    if info == None:
+                        shouldAdd = False
+                    else:
+                        shouldAdd = True
+
+                    if mode == "run" and post["timestamp"] < latest:
+                        quit = True
+                        break
+
+                    if unique(post) and shouldAdd:
+                        insert(*info)
+
+                    if post["timestamp"] < earliest:
+                        earliest = post["timestamp"]
+        print "Done " + tag
     print "Finished."
 except KeyboardInterrupt:
     print "\nExiting."
