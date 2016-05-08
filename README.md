@@ -1,5 +1,5 @@
 # miraculousladybot
-Logs tumblr fanfictions to a psql database and generates fanfictions using markov chains. You can see it in action [here](miraculousladybot.tumblr.com).
+Logs tumblr fanfictions to a psql database and generates fanfictions using markov chains. You can see it in action [here](http://www.miraculousladybot.tumblr.com).
 
 # Installation
 
