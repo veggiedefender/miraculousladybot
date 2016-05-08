@@ -70,7 +70,7 @@ def getInfo(post, tag):
         return (postID, blog, content, tag, timestamp)
     except UnboundLocalError:
         return None
-        
+
 #Loop through tags and log unique posts
 try:
     print "Running..."
@@ -84,10 +84,15 @@ try:
         quit = False
         while not quit:
             posts = client.tagged(tag, limit=20, before=earliest)
-
-            if len(posts) == 0: #This means there are no posts left
+            try:
+                earliest = min([ post["timestamp"] for post in posts ])
+            except ValueError:
                 quit = True
                 break
+
+            #if len(posts) == 0: #This means there are no posts left
+            #    quit = True
+            #    break
 
             for post in posts:
                 if post != None and post["type"] in ["text", "quote"]:
@@ -105,10 +110,7 @@ try:
                         sys.stdout.flush()
                         total += 1
                         insert(*info)
-                        sys.stdout.write('Found {0} posts with tag {1}\r'.format(total, tag))
-
-                    if post["timestamp"] < earliest:
-                        earliest = post["timestamp"]
+                        sys.stdout.write('Found {0} posts with tag {1} timestamp {2}\r'.format(total, tag, earliest))
         print "\nDone " + tag + "\n"
     print "Finished."
 except KeyboardInterrupt:
