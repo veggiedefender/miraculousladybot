@@ -71,10 +71,12 @@ def getInfo(post, tag):
     except UnboundLocalError:
         return None
 
+def 
 #Loop through tags and log unique posts
 try:
     print "Running..."
     for tag in tags:
+        total = 0
         earliest = int(time.time()) #Bookmark for going back in time
         if mode == "run":
             db.execute("SELECT date FROM logs WHERE tag=%s ORDER BY date DESC LIMIT 1", (tag,))
@@ -101,11 +103,14 @@ try:
                         break
 
                     if unique(post) and shouldAdd:
+                        sys.stdout.flush()
+                        total += 1
                         insert(*info)
+                        sys.stdout.write('Found {0} posts with tag {1}\r'.format(total, tag))
 
                     if post["timestamp"] < earliest:
                         earliest = post["timestamp"]
-        print "Done " + tag
+        print "\nDone " + tag + "\n"
     print "Finished."
 except KeyboardInterrupt:
     print "\nExiting."
