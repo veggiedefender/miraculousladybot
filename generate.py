@@ -10,22 +10,24 @@ tags = ["miraculous ladybug",
     "miraculous", 
     "ladybug"]
 
-
-db.execute("SELECT content FROM logs LIMIT 100")
-text = [ post[0] for post in db.fetchall()]
-text = ''.join(text)
-
 class POSifiedText(markovify.Text):
     def word_split(self, sentence):
         words = re.split(self.word_split_pattern, sentence)
-        words = [ "::".join(tag) for tag in nltk.pos_tag(words) ]
+        if words[0] != "":
+            words = [ "::".join(tag) for tag in nltk.pos_tag(words) ]
+        else:
+            words = list('',)
         return words
 
     def word_join(self, words):
         sentence = " ".join(word.split("::")[0] for word in words)
         return sentence
 
-text_model = POSifiedText(text)
+db.execute("SELECT content FROM logs ORDER BY date LIMIT 500")
+text = [ post[0] for post in db.fetchall() ]
+text = ''.join(text)
+
+text_model = POSifiedText(text, state_size=3)
 
 #Get a random length skewed toward shorter ones
 def get_i():
