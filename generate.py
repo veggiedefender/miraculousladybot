@@ -23,10 +23,12 @@ class POSifiedText(markovify.Text):
         sentence = " ".join(word.split("::")[0] for word in words)
         return sentence
 
+print "Getting data."
 db.execute("SELECT content FROM logs ORDER BY date LIMIT 500")
 text = [ post[0] for post in db.fetchall() ]
 text = ''.join(text)
 
+print "Generating model"
 text_model = POSifiedText(text, state_size=3)
 
 #Get a random length skewed toward shorter ones
