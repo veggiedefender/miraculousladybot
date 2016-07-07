@@ -43,4 +43,4 @@ The second mode, `run` is the default. It will "update" the database with any ne
 
 ## Running generate.py
 
-`generate.py` will automatically generate and post a fanfiction. No setup is required if you have completed the previous steps.
+`generate.py` will automatically generate and post a fanfiction. No setup is required if you have completed the previous steps. If you get an error like `TypeError: unsupported operand type(s) for +: 'NoneType' and 'str'`, it's probably because you don't have enough data. Change `text_model = POSifiedText(text, state_size=3)` to `text_model = POSifiedText(text, state_size=2)`
