@@ -1,5 +1,5 @@
 pytumblr
 psycopg2
-bs4
+beautifulsoup4
 nltk
 markovify
