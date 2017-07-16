@@ -1,5 +1,5 @@
-pytumblr
 psycopg2
-beautifulsoup4
-nltk
+requests
+html2text
+numpy
 markovify

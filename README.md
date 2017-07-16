@@ -11,7 +11,7 @@ Create a database named `fanfictions`
 
 Run the install script to set up tables and columns 
 
-`psql fanfictions -f create_tables.sql -U your_username -h localhost -W`
+`psql fanfictions -f create_tables.sql`
 
 Install requirements with `pip`
 
@@ -30,16 +30,7 @@ Edit the tags in both `log.py` and `generate.py`. The tags in `log.py` are the t
 # Running it
 
 ## Running log.py
-`log.py` runs in two modes. 
-
-The first mode, `sync` will find *every* unique fanfiction with the associated tags. This will run in two cases:
-
-1. When the `fanfictions` database is empty
-2. When you add **anything** to the command line arguments. For example, `python log.py sync` will trigger it as well as `python log.py sandwiches`.
-
-I recommend running `log.py` in sync mode once every 24 hours to catch anything the logger may have missed.
-
-The second mode, `run` is the default. It will "update" the database with any new posts. It's much faster than sync mode but may miss a few posts.
+`python log.py`
 
 ## Running generate.py
 

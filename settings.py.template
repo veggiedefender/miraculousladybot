@@ -1,0 +1,38 @@
+import pytumblr
+import psycopg2
+
+
+auth = {
+    "consumer_key": "",
+    "consumer_secret": "",
+    "oauth_token": "",
+    "oauth_token_secret": ""
+}
+
+conn = psycopg2.connect("dbname=fanfictions")
+blogName = "miraculousladybot"
+
+log_tags = [
+    "miraculous ladybug fanfiction",
+    "miraculous ladybug fanfic",
+    "ml fanfiction",
+    "ml fanfic",
+    "ladybug fanfiction",
+    "ladybug fanfic",
+    "miraculous fanfiction",
+    "miraculous fanfic",
+    "adrinette",
+    "ladynoir",
+    "ladrien",
+    "marichat"
+]
+
+post_tags = [
+    "miraculous ladybug",
+    "fanfiction",
+    "miraculous",
+    "ladybug"
+]
+
+# Connect to database
+db = conn.cursor()

@@ -1,122 +1,47 @@
-#All the imports
+import requests
 import time
-from bs4 import BeautifulSoup
-import sys
+import psycopg2
+from datetime import datetime
+from html2text import html2text
+from settings import conn, db, auth, log_tags
 
-from settings import client, conn, db, blogName
+url = f"https://api.tumblr.com/v2/tagged?api_key={auth['consumer_key']}&tag="
 
-#Tags
-tags = ["miraculous ladybug fanfiction", 
-    "miraculous ladybug fanfic", 
-    "ml fanfiction", 
-    "ml fanfic", 
-    "ladybug fanfiction", 
-    "ladybug fanfic", 
-    "miraculous fanfiction", 
-    "miraculous fanfic", 
-    "adrinette", 
-    "ladynoir", 
-    "ladrien",
-    "marichat"]
 
-#Set the mode. Two options: sync and run
-if len(sys.argv) > 1:
-    mode = "sync"
-else:
-    mode = "run"
-    db.execute("SELECT * FROM logs LIMIT 1")
-    if len(db.fetchall()) == 0:
-        print "Database is empty."
-        mode = "sync"
+def get(url):
+    while True:
+        try:
+            r = requests.get(url).json()
+            assert r is not None
+            assert r["meta"]["msg"] == "OK"
+        except Exception:
+            time.sleep(1)
+            continue
+        break
+    return r
 
-print "Running in mode %s" % mode.upper()
 
-#Some helper functions
-def sanitize(value):
-    #Strip HTML
-    soup = BeautifulSoup(value, "html.parser")
-    for tag in soup.findAll(True):
-        tag.hidden = True
-    content = soup.renderContents()
-
-    #Remove duplicate whitespaces/newlines
-    content = content.replace("\n", " ")
-    return ' '.join(content.split()) + "\n"
-
-def insert(postID, blog, content, tag, timestamp):
-    db.execute("INSERT INTO logs (id, blog, content, tag, date) VALUES (%s, %s, %s, %s, %s)",
-        (postID, blog, content, tag, timestamp))
-
-def unique(post):
-    postID = post["id"]
-    db.execute("SELECT * FROM logs WHERE id=%s", (postID,))
-    results = db.fetchall()
-    return len(results) == 0
-
-def getInfo(post, tag):
-    postID = post["id"]  
-
-    blog = post["blog_name"]                
-    
-    if post["type"] == "text":
-        if len(post["trail"]) > 0:
-            content = sanitize(post["trail"][0]["content"])
-    elif post["type"] == "quote":
-        if len(post["text"]) > 0:
-            content = sanitize(post["text"])
-
-    timestamp = post["timestamp"]  
-    try:
-        return (postID, blog, content, tag, timestamp)
-    except UnboundLocalError:
-        return None
-
-#Loop through tags and log unique posts
-try:
-    print "Running..."
-    for tag in tags:
-        total = 0
-        earliest = int(time.time()) #Bookmark for going back in time
-        if mode == "run":
-            db.execute("SELECT date FROM logs WHERE tag=%s ORDER BY date DESC LIMIT 1", (tag,))
-            latest = db.fetchall()[0][0]
-
-        quit = False
-        while not quit:
-            posts = client.tagged(tag, limit=20, before=earliest)
+for tag in log_tags:
+    total = 0
+    earliest = int(datetime.now().timestamp())
+    quit = False
+    while not quit:
+        posts = get(f"{url}{tag}&before={earliest}")["response"]
+        if len(posts) == 0:
+            quit = True
+            break
+        earliest = min([post["timestamp"] for post in posts])
+        posts = [post for post in posts if post["type"] == "text"]
+        for post in posts:
             try:
-                earliest = min([ post["timestamp"] for post in posts ])
-            except ValueError:
-                quit = True
-                break
-
-            #if len(posts) == 0: #This means there are no posts left
-            #    quit = True
-            #    break
-
-            for post in posts:
-                if post != None and post["type"] in ["text", "quote"]:
-                    info = getInfo(post, tag)
-                    if info == None:
-                        shouldAdd = False
-                    else:
-                        shouldAdd = True
-
-                    if mode == "run" and post["timestamp"] < latest:
-                        quit = True
-                        break
-
-                    if unique(post) and shouldAdd:
-                        sys.stdout.flush()
-                        total += 1
-                        insert(*info)
-                        sys.stdout.write('Found {0} posts with tag {1} timestamp {2}\r'.format(total, tag, earliest))
-        print "\nDone " + tag + "\n"
-    print "Finished."
-except KeyboardInterrupt:
-    print "\nExiting."
-
-#Close connection
-print "Closing connection to database."
-db.close()
-conn.close()
+                id = post["id"]
+                body = html2text(post["body"])
+                timestamp = post["timestamp"]
+                db.execute("""INSERT INTO fics (id, body, date)
+                           VALUES (%s, %s, %s)""", (id, body, timestamp))
+                conn.commit()
+                total += 1
+                print(f"{tag}: {total}\r", end="")
+            except Exception:
+                conn.rollback()
+    print()
