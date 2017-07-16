@@ -3,3 +3,4 @@ requests
 html2text
 numpy
 markovify
+nltk
