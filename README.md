@@ -19,13 +19,7 @@ Install requirements with `pip`
 
 # Setup
 
-Edit `settings.py` with your information. You can get your Tumblr credentials [here](https://api.tumblr.com/console). 
-
-Change `blogName` to the name of the blog you want to post to. 
-
-Edit connection info if your database is set up differently.
-
-Edit the tags in both `log.py` and `generate.py`. The tags in `log.py` are the tags that are searched, while the tags in `generate.py` are the tags included in each post.
+Edit `settings.py` with your information. You can get your Tumblr credentials [here](https://api.tumblr.com/console).
 
 # Running it
 
